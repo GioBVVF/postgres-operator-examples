@@ -63,8 +63,8 @@ spec:
       repos:
       - name: repo1
         schedules:
-          full: "00 4 * * *"
-          incremental: "0 */4 * * *"
+          full: "00 5 * * *"
+          incremental: "0 */2 * * *"
         volume:
           volumeClaimSpec:
             accessModes:
@@ -99,6 +99,7 @@ spec:
       synchronous_mode_strict: true #  disable all writing if there are no synchronous repliacs available
       postgresql:
         pparameters:
+          synchronous_commit: "on"
           max_parallel_workers: 2
           max_worker_processes: 2
           shared_buffers: 2GB
