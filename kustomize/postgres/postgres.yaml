@@ -1,27 +1,110 @@
 apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
-  name: hippo
+  name: paco
 spec:
+  service:
+    type: LoadBalancer
   image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres:centos8-14.2-0
   postgresVersion: 14
   instances:
     - name: instance1
+      replicas: 5
+      resources:
+       requests:
+        memory: 4Gi
+        cpu: 1.0
+       limits:
+        memory: 8Gi
+        cpu: 2.0
+      walVolumeClaimSpec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 10Gi
       dataVolumeClaimSpec:
         accessModes:
         - "ReadWriteOnce"
         resources:
           requests:
-            storage: 1Gi
+            storage: 20Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  postgres-operator.crunchydata.com/cluster: paco
+                  postgres-operator.crunchydata.com/instance-set: instance1
+  users:
+    - name: postgres
+    - name: admin
+      databases:
+        - admin
+        - ordini
+        - supreme
+      options: "SUPERUSER"
+  
   backups:
     pgbackrest:
       image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbackrest:centos8-2.36-1
+      configuration:
+      - secret:
+          name: pgo-multi-repo-creds
+      global:
+        repo1-retention-full-type: time
+        repo1-retention-full: "15"
+        repo2-retention-full-type: time
+        repo2-retention-full: "30"
+        repo2-path: /pgbackrest/postgres-operator/paco/repo2   
       repos:
       - name: repo1
+        schedules:
+          full: "00 4 * * *"
+          incremental: "0 */4 * * *"
         volume:
           volumeClaimSpec:
             accessModes:
             - "ReadWriteOnce"
             resources:
               requests:
-                storage: 1Gi
+                storage: 5Gi
+      - name: repo2
+        schedules:
+          full: "00 1 * * *"
+          incremental: "0 */4 * * *"
+        gcs:
+          bucket: "repo_backup_postgres"
+  proxy:
+    pgBouncer:
+      image: registry.developers.crunchydata.com/crunchydata/crunchy-pgbouncer:centos8-1.16-1
+      replicas: 2
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  postgres-operator.crunchydata.com/cluster: paco
+                  postgres-operator.crunchydata.com/role: pgbouncer
+
+  patroni:
+    dynamicConfiguration:
+      synchronous_mode: true
+      synchronous_mode_strict: true #  disable all writing if there are no synchronous repliacs available
+      postgresql:
+        pparameters:
+          max_parallel_workers: 2
+          max_worker_processes: 2
+          shared_buffers: 2GB
+          work_mem: 2MB
+  
+  monitoring:
+   pgmonitor:
+    exporter:
+     image: registry.developers.crunchydata.com/crunchydata/crunchy-postgres-exporter:ubi8-5.0.5-0
