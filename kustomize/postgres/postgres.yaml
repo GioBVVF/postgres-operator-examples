@@ -98,12 +98,14 @@ spec:
                   postgres-operator.crunchydata.com/role: pgbouncer
   patroni:
     dynamicConfiguration:
+      synchronous_mode: true
       postgresql:
         parameters:
+          synchronous_commit: "on"
           max_parallel_workers: 2
           max_worker_processes: 2
           shared_buffers: 1GB
-          work_mem: 2MB
+          work_mem: 6MB
 
   monitoring:
    pgmonitor:
