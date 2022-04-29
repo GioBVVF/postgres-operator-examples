@@ -96,19 +96,14 @@ spec:
                 matchLabels:
                   postgres-operator.crunchydata.com/cluster: paco
                   postgres-operator.crunchydata.com/role: pgbouncer
-
   patroni:
     dynamicConfiguration:
-      synchronous_mode: true
-      synchronous_mode_strict: true #  disable all writing if there are no synchronous repliacs available
       postgresql:
-        pparameters:
-          synchronous_commit: "on"
+        parameters:
           max_parallel_workers: 2
           max_worker_processes: 2
-          shared_buffers: 2GB
-          work_mem: 6MB
-          effective_cache_size: 4GB
+          shared_buffers: 1GB
+          work_mem: 2MB
 
   monitoring:
    pgmonitor:
