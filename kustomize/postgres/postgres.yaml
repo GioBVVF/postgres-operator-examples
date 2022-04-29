@@ -9,7 +9,7 @@ spec:
   postgresVersion: 14
   instances:
     - name: instance1
-      replicas: 5
+      replicas: 3
       resources:
        requests:
         memory: 4Gi
@@ -28,7 +28,7 @@ spec:
         - "ReadWriteOnce"
         resources:
           requests:
-            storage: 20Gi
+            storage: 100Gi
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -42,11 +42,15 @@ spec:
   users:
     - name: postgres
     - name: admin
+      options: "SUPERUSER"
+    - name: pgbench
+    - name: supreme
+    - name: developer
       databases:
         - admin
-        - ordini
+        - impiegati
         - supreme
-      options: "SUPERUSER"
+        - pgbench
   
   backups:
     pgbackrest:
@@ -63,19 +67,19 @@ spec:
       repos:
       - name: repo1
         schedules:
-          full: "00 5 * * *"
-          incremental: "0 */2 * * *"
+          full: "00 4 * * *"
+          incremental: "30 */2 * * *"
         volume:
           volumeClaimSpec:
             accessModes:
             - "ReadWriteOnce"
             resources:
               requests:
-                storage: 5Gi
+                storage: 100Gi
       - name: repo2
         schedules:
           full: "00 1 * * *"
-          incremental: "0 */4 * * *"
+          incremental: "0 */6 * * *"
         gcs:
           bucket: "repo_backup_postgres"
   proxy:
@@ -103,8 +107,9 @@ spec:
           max_parallel_workers: 2
           max_worker_processes: 2
           shared_buffers: 2GB
-          work_mem: 2MB
-  
+          work_mem: 6MB
+          effective_cache_size: 4GB
+
   monitoring:
    pgmonitor:
     exporter:

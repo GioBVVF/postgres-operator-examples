@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cloud.google.com/neg: '{"ingress":true}'
+  creationTimestamp: "2022-04-28T12:16:29Z"
+  finalizers:
+  - service.kubernetes.io/load-balancer-cleanup
+  labels:
+    app.kubernetes.io/name: postgres-operator-monitoring
+  name: grafana-svc
+  namespace: postgres-operator
+  resourceVersion: "576230"
+  uid: eecb648c-62e9-4285-8714-518d5c6e4202
+spec:
+  clusterIP: 10.68.13.159
+  clusterIPs:
+  - 10.68.13.159
+  externalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - nodePort: 30748
+    port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app.kubernetes.io/name: postgres-operator-monitoring
+    name: crunchy-grafana
+  sessionAffinity: None
+  type: LoadBalancer
+status:
+  loadBalancer:
+    ingress:
+    - ip: 34.118.8.100
